@@ -469,7 +469,7 @@ class KandinskyPriorPipeline(DiffusionPipeline):
             truncation=True,
             return_tensors="pt",
         )
-        txt_items = {k: v.to("cuda") for k, v in txt.items()}
+        txt_items = {k: v.to(self._execution_device) for k, v in txt.items()}
         txt_feats = self.text_encoder(**txt_items)
         last_hidden_states = txt_feats.last_hidden_state[0].detach().cpu().numpy()
         prompt_embeds = txt_feats.text_embeds.detach().cpu()
@@ -478,7 +478,7 @@ class KandinskyPriorPipeline(DiffusionPipeline):
         for sub_img, sub_name in zip(raw_data["subject_images"], raw_data["subject_keywords"]):
             if isinstance(sub_img, str):
                 sub_img = Image.open(sub_img)
-            mask_img = self.image_processor(sub_img, return_tensors="pt").to("cuda")
+            mask_img = self.image_processor(sub_img, return_tensors="pt").to(self._execution_device)
             vision_feats = self.image_encoder(**mask_img).image_embeds
             entity_tokens = self.tokenizer(sub_name)["input_ids"][1:-1]
 
