@@ -1,63 +1,70 @@
-## <div align="center"> <i>ECLIPSE</i>: Revisiting the Text-to-Image Prior for Effecient Image Generation </div>
+## <div align="center"> <i>&lambda;-ECLIPSE</i>: Multi-Concept Personalized Text-to-Image Diffusion Models by Leveraging CLIP Latent Space </div>
 
 <div align="center">
-  <a href="https://eclipse-t2i.vercel.app/"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=Vercel&color=blue&logo=vercel"></a> &ensp;
-  <a href="https://arxiv.org/abs/2312.04655/"><img src="https://img.shields.io/static/v1?label=ArXiv&message=2312.04655&color=B31B1B&logo=arxiv"></a> &ensp;
-  <a href="https://huggingface.co/spaces/ECLIPSE-Community/ECLIPSE-Kandinsky-v2.2"><img src="https://img.shields.io/static/v1?label=Demo ECLIPSE&message=HuggingFace&color=yellow"></a> &ensp;
+  <a href="https://eclipse-t2i.github.io/Lambda-ECLIPSE/"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=GitHub&color=blue&logo=github"></a> &ensp;
+  <a href="#"><img src="https://img.shields.io/static/v1?label=ArXiv&message=2312.04655&color=B31B1B&logo=arxiv"></a> &ensp;
+  <a href="https://huggingface.co/ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0"><img src="https://img.shields.io/static/v1?label=Model Weights&message=HuggingFace&color=yellow"></a> &ensp;
 
 </div>
 
 ---
 
-This repository contains the inference code for our paper, ECLIPSE.
-We show how to utilize the pre-trained ECLIPSE text-to-image prior associated with diffusion image decoders such as Karlo and Kandinsky.
+This repository contains the inference code for our paper, &lambda;-ECLIPSE.
 
-- ECLIPSE presents the tiny prior learning strategy that compresses the previous prior models from 1 billion parameters down to 33 million parameters.
-- Additionally, ECLIPSE prior is trained on a mere 5 million image-text (alt-text) pairs.
+- The &lambda;-ECLIPSE model is a light weight support for multi-concept personalization. &lambda;-ECLIPSE is tiny T2I prior model designed for Kandinsky v2.2 diffusion image generator.
 
-> **_News:_**  Checkout our latest work, [&lambda;-ECLIPSE](https://eclipse-t2i.github.io/Lambda-ECLIPSE/) extending the T2I priors for effecient zero-shot multi-subject driven text-to-image generations. 
+- &lambda;-ECLIPSE model extends the [ECLIPSE-Prior](https://huggingface.co/ECLIPSE-Community/ECLIPSE_KandinskyV22_Prior)  via incorporating the image-text interleaved data.
+
+- &lambda;-ECLIPSE shows that we do not need to train the Personalized T2I (P-T2I) models on lot of resources. For instance, &lambda;-ECLIPSE is trained on mere 74 GPU Hours (A100) compared to it's couterparts BLIP-Diffusion (2304 GPU hours) and Kosmos-G (12300 GPU hours).
+
+> **_News:_**  Checkout our previous work, [ECLIPSE](https://eclipse-t2i.vercel.app/) on resource effeicient T2I.
 
 
 **Please follow the below steps to run the inference locally.**
 
 ---
 
-**Qualitative Comparisons:**
-![Examples](./assets/example.png)
+**Qualitative Examples:**
+![Examples](./assets/overview_white.png)
 
 
 **Quantitative Comparisons:**
 ![Results](./assets/results.png)
-
-## TODOs:
-
-- [x] ~~Release ECLIPSE priors for Kandinsky v2.2 and Karlo-v1-alpha.~~
-- [x] ~~Release the demo.~~
-- [ ] Release ECLIPSE prior with Kandinsky v2.2 LCM decoder. (soon!)
-- [ ] Release ECLIPSE prior training code. (will be released in seperate repository)
 
 
 ## Setup
 
 ### Installation
 ```bash
-git clone git@github.com:eclipse-t2i/eclipse-inference.git
+git clone git@github.com:Maitreyapatel/lambda-eclipse-inference.git
 
 conda create -p ./venv python=3.9
 pip install -r requirements.txt
 ```
 
-### Demo
+## Run Inference
+
+**Note:** &lambda;-ECLIPSE prior is not a diffusion model -- while image decoders are.
+
+Therefore, we first need to load the prior mdoel and then Kandinsky v2.2 Image generator.
+
+```bash
+# run the inference:
+conda activate ./venv
+
+python test.py --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/cat.png" --subject2_name="glasses"
+
+## results will be stored in ./assets/
+```
+
+## Run Demo
 ```bash
 conda activate ./venv
 gradio main.py
 ```
 
-## Run Inference
 
-This repository supports two pre-trained image decoders: [Karlo-v1-alpha](https://huggingface.co/kakaobrain/karlo-v1-alpha) and [Kandinsky-v2.2](https://huggingface.co/kandinsky-community/kandinsky-2-2-decoder).
-
-**Note:** ECLIPSE prior is not a diffusion model -- while image decoders are.
+## ECLIPSE-only inference example
 
 
 ### Kandinsky Inference
@@ -95,21 +102,6 @@ images = pipe(
     image_embeds=image_embeds,
     negative_image_embeds=negative_image_embeds,
 ).images
-
-images[0]
-```
-
-
-### Karlo Inference
-```python
-from src.pipelines.pipeline_unclip import UnCLIPPipeline
-from src.priors.prior_transformer import PriorTransformer
-
-prior = PriorTransformer.from_pretrained("ECLIPSE-Community/ECLIPSE_Karlo_Prior")
-pipe = UnCLIPPipeline.from_pretrained("kakaobrain/karlo-v1-alpha", prior=prior).to("cuda")
-
-prompt="black apples in the basket"
-images = pipe(prompt, decoder_guidance_scale=7.5).images
 
 images[0]
 ```
