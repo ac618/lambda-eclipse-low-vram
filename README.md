@@ -48,11 +48,57 @@ pip install -r requirements.txt
 
 ### Quick plug-and-play script:
 ```bash
+import os
+import torch
+from transformers import (
+    CLIPTextModelWithProjection,
+    CLIPTokenizer,
+)
+from src.pipelines.pipeline_kandinsky_subject_prior import KandinskyPriorPipeline
+from src.priors.lambda_prior_transformer import PriorTransformer
+from diffusers import DiffusionPipeline
+
+text_encoder = CLIPTextModelWithProjection.from_pretrained(
+    "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k",
+    projection_dim=1280,
+    torch_dtype=torch.float32,
+)
+tokenizer = CLIPTokenizer.from_pretrained("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k")
+
+prior = PriorTransformer.from_pretrained("ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0")
+pipe_prior = KandinskyPriorPipeline.from_pretrained(
+    "kandinsky-community/kandinsky-2-2-prior",
+    prior=prior,
+    text_encoder=text_encoder,
+    tokenizer=tokenizer,
+).to("cuda")
+
+pipe = DiffusionPipeline.from_pretrained(
+    "kandinsky-community/kandinsky-2-2-decoder"
+).to("cuda")
+
+raw_data = {
+    "prompt": args.prompt,
+    "subject_images": [args.subject1_path, args.subject2_path],
+    "subject_keywords": [args.subject1_name, args.subject2_name]
+}
+image_emb, negative_image_emb = pipe_prior(
+    raw_data=raw_data,
+).to_tuple()
+image = pipe(
+    image_embeds=image_emb,
+    negative_image_embeds=negative_image_emb,
+    num_inference_steps=50,
+    guidance_scale=7.5,
+).images
+
+image[0]
 ```
 
 ### Introductory hands-on example (to understand end-to-end pipeline):
 <a href="#" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
+We recommend either referring to the colab notebook or [test.py](test.py) script to understand the inner working of &lambda;-ECLIPSE.
 
 ```bash
 # run the inference:
@@ -73,48 +119,6 @@ conda activate ./venv
 gradio main.py
 ```
 
-
-## ECLIPSE-only inference example
-
-
-### Kandinsky Inference
-```python
-from transformers import CLIPTextModelWithProjection, CLIPTokenizer
-from src.pipelines.pipeline_kandinsky_prior import KandinskyPriorPipeline
-from src.priors.prior_transformer import PriorTransformer
-from diffusers import DiffusionPipeline
-
-text_encoder = (
-    CLIPTextModelWithProjection.from_pretrained(
-        "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k",
-        projection_dim=1280,
-        torch_dtype=torch.float32,
-    )
-) 
-
-tokenizer = CLIPTokenizer.from_pretrained(
-    "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k"
-)
-
-prior = PriorTransformer.from_pretrained("ECLIPSE-Community/ECLIPSE_KandinskyV22_Prior")
-pipe_prior = KandinskyPriorPipeline.from_pretrained("kandinsky-community/kandinsky-2-2-prior",    
-  prior=prior,
-  text_encoder=text_encoder,
-  tokenizer=tokenizer,
-).to("cuda")
-
-pipe = DiffusionPipeline.from_pretrained("kandinsky-community/kandinsky-2-2-decoder").to("cuda")
-
-prompt = "black apples in the basket"
-image_embeds, negative_image_embeds = pipe_prior(prompt).to_tuple()
-images = pipe(
-    num_inference_steps=50,
-    image_embeds=image_embeds,
-    negative_image_embeds=negative_image_embeds,
-).images
-
-images[0]
-```
 
 # Acknowledgement
 
