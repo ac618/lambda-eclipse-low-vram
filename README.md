@@ -4,7 +4,7 @@
   <a href="https://eclipse-t2i.github.io/Lambda-ECLIPSE/"><img src="https://img.shields.io/static/v1?label=Project%20Page&message=GitHub&color=blue&logo=github"></a> &ensp;
   <a href="#"><img src="https://img.shields.io/static/v1?label=ArXiv&message=2312.04655&color=B31B1B&logo=arxiv"></a> &ensp;
   <a href="https://huggingface.co/ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0"><img src="https://img.shields.io/static/v1?label=Model Weights&message=HuggingFace&color=yellow"></a> &ensp;
-
+  <a href="#" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 </div>
 
 ---
@@ -46,13 +46,23 @@ pip install -r requirements.txt
 
 **Note:** &lambda;-ECLIPSE prior is not a diffusion model -- while image decoders are.
 
-Therefore, we first need to load the prior mdoel and then Kandinsky v2.2 Image generator.
+### Quick plug-and-play script:
+```bash
+```
+
+### Introductory hands-on example (to understand end-to-end pipeline):
+<a href="#" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
 
 ```bash
 # run the inference:
 conda activate ./venv
 
-python test.py --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/cat.png" --subject2_name="glasses"
+# single-subject example
+python test.py --prompt="a cat on top of the snow mountain" --subject1_path="./assets/cat.png" --subject1_name="cat"
+
+# multi-subject example
+python test.py --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/blue_sunglasses.png" --subject2_name="glasses"
 
 ## results will be stored in ./assets/
 ```
