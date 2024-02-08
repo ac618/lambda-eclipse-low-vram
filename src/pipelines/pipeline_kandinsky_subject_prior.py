@@ -477,8 +477,8 @@ class KandinskyPriorPipeline(DiffusionPipeline):
 
         for sub_img, sub_name in zip(raw_data["subject_images"], raw_data["subject_keywords"]):
             if isinstance(sub_img, str):
-                img = Image.open(sub_img)
-            mask_img = self.image_processor(img, return_tensors="pt").to("cuda")
+                sub_img = Image.open(sub_img)
+            mask_img = self.image_processor(sub_img, return_tensors="pt").to("cuda")
             vision_feats = self.image_encoder(**mask_img).image_embeds
             entity_tokens = self.tokenizer(sub_name)["input_ids"][1:-1]
 

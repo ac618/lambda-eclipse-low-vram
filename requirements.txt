@@ -13,4 +13,4 @@ gradio
 jmespath
 opencv-python
 PyWavelet
-gradio==3.47.1
+gradio
