@@ -6,7 +6,7 @@ from transformers import (
 )
 from src.pipelines.pipeline_kandinsky_subject_prior import KandinskyPriorPipeline
 from src.priors.lambda_prior_transformer import PriorTransformer
-from diffusers import DiffusionPipeline
+from diffusers import DiffusionPipeline, UNet2DConditionModel
 
 # write the argument parser
 def get_parser():
@@ -19,6 +19,7 @@ def get_parser():
     parser.add_argument("--subject2_path", type=str, default=None, help="Batch size")
     parser.add_argument("--subject2_name", type=str, default=None, help="Learning rate")
     parser.add_argument("--output_dir", type=str, default="./assets/", help="Output directory")
+    parser.add_argument("--unet_checkpoint", type=str, default=None, help="Finetuned UNet model FOLDER path")
 
     args = parser.parse_args()
     return args
@@ -41,7 +42,13 @@ def main(args):
 
     pipe = DiffusionPipeline.from_pretrained(
         "kandinsky-community/kandinsky-2-2-decoder"
-    ).to("cuda")
+    )
+    if args.unet_checkpoint is not None:
+        print('Loading UNet Checkpoint')
+        unet = UNet2DConditionModel.from_pretrained(args.unet_checkpoint)
+        pipe.unet = unet
+        
+    pipe = pipe.to("cuda")
 
     raw_data = {
         "prompt": args.prompt,

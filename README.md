@@ -47,60 +47,10 @@ pip install -r requirements.txt
 ```
 
 ## Run Inference
+<a href="https://colab.research.google.com/drive/1VcqzXZmilntec3AsIyzCqlstEhX4Pa1o?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+
 
 **Note:** &lambda;-ECLIPSE prior is not a diffusion model -- while image decoders are.
-
-### Quick plug-and-play script:
-```bash
-import os
-import torch
-from transformers import (
-    CLIPTextModelWithProjection,
-    CLIPTokenizer,
-)
-from src.pipelines.pipeline_kandinsky_subject_prior import KandinskyPriorPipeline
-from src.priors.lambda_prior_transformer import PriorTransformer
-from diffusers import DiffusionPipeline
-
-text_encoder = CLIPTextModelWithProjection.from_pretrained(
-    "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k",
-    projection_dim=1280,
-    torch_dtype=torch.float32,
-)
-tokenizer = CLIPTokenizer.from_pretrained("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k")
-
-prior = PriorTransformer.from_pretrained("ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0")
-pipe_prior = KandinskyPriorPipeline.from_pretrained(
-    "kandinsky-community/kandinsky-2-2-prior",
-    prior=prior,
-    text_encoder=text_encoder,
-    tokenizer=tokenizer,
-).to("cuda")
-
-pipe = DiffusionPipeline.from_pretrained(
-    "kandinsky-community/kandinsky-2-2-decoder"
-).to("cuda")
-
-raw_data = {
-    "prompt": args.prompt,
-    "subject_images": [args.subject1_path, args.subject2_path],
-    "subject_keywords": [args.subject1_name, args.subject2_name]
-}
-image_emb, negative_image_emb = pipe_prior(
-    raw_data=raw_data,
-).to_tuple()
-image = pipe(
-    image_embeds=image_emb,
-    negative_image_embeds=negative_image_emb,
-    num_inference_steps=50,
-    guidance_scale=7.5,
-).images
-
-image[0]
-```
-
-### Introductory hands-on example (to understand end-to-end pipeline):
-<a href="https://colab.research.google.com/drive/1VcqzXZmilntec3AsIyzCqlstEhX4Pa1o?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 
 We recommend either referring to the colab notebook or [test.py](test.py) script to understand the inner working of &lambda;-ECLIPSE.
 
@@ -109,10 +59,10 @@ We recommend either referring to the colab notebook or [test.py](test.py) script
 conda activate ./venv
 
 # single-subject example
-python test.py --prompt="a cat on top of the snow mountain" --subject1_path="./assets/cat.png" --subject1_name="cat"
+python test_quick.py --prompt="a cat on top of the snow mountain" --subject1_path="./assets/cat.png" --subject1_name="cat"
 
 # multi-subject example
-python test.py --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/blue_sunglasses.png" --subject2_name="glasses"
+python test_quick.py --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/blue_sunglasses.png" --subject2_name="glasses"
 
 ## results will be stored in ./assets/
 ```
@@ -123,6 +73,82 @@ conda activate ./venv
 gradio main.py
 ```
 
+## Concept-specific finetuning
+
+🔥🔥🔥 **All concepts combined training:**
+```bash
+export DATASET_PATH="<path-to-parent-folder-containing-concept-specific-folders>"
+export OUTPUT_DIR="<output-dir>"
+export TRAINING_STEPS=8000
+
+python train_text_to_image_decoder_whole_db.py \
+        --dataset_name='lambdalabs/pokemon-blip-captions' \
+        --instance_data_dir=$DATASET_PATH \
+        --subject_data_dir=$DATASET_PATH \
+        --output_dir=$OUTPUT_DIR \
+        --validation_prompts='A dog' \ # !!! Note: This is to check concept overfitting.
+        --resolution=768 \
+        --train_batch_size=1 \
+        --gradient_accumulation_steps=4 \
+        --gradient_checkpointing \
+        --max_train_steps=$TRAINING_STEPS \
+        --learning_rate=1e-05 \
+        --max_grad_norm=1 \
+        --checkpoints_total_limit=3 \
+        --lr_scheduler=constant \
+        --lr_warmup_steps=0 \
+        --report_to=wandb \
+        --validation_epochs=1000 \
+        --checkpointing_steps=1000
+```
+
+**Individual concept training:**
+```bash
+export DATASET_PATH="<path-to-folder-containing-images>"
+export OUTPUT_DIR="<output-dir>"
+export CONCEPT="<high-level-concept-name-like-dog>"
+export TRAINING_STEPS=400
+
+python train_text_to_image_decoder.py \
+        --dataset_name='lambdalabs/pokemon-blip-captions' \
+        --instance_data_dir=$DATASET_PATH \
+        --subject_data_dir=$DATASET_PATH \
+        --output_dir=$OUTPUT_DIR \
+        --validation_prompts='A $CONCEPT' \ # !!! Note: This is to check concept overfitting. This never supposed to generate your concept images.
+        --resolution=768 \
+        --train_batch_size=1 \
+        --gradient_accumulation_steps=4 \
+        --gradient_checkpointing \
+        --max_train_steps=$TRAINING_STEPS \
+        --learning_rate=1e-05 \
+        --max_grad_norm=1 \
+        --checkpoints_total_limit=4 \
+        --lr_scheduler=constant \
+        --lr_warmup_steps=0 \
+        --report_to=wandb \
+        --validation_epochs=100 \
+        --checkpointing_steps=100
+```
+
+## Combined Inference (Prior + Finetunined UNet):
+
+To perform combined &lambda;-ECLIPSE and finetuned UNet (previous step) inference:
+
+```bash
+# run the inference:
+conda activate ./venv
+
+# single/multi subject example
+python test_quick.py --unet_checkpoint="<path-to-unet-folder>" --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/blue_sunglasses.png" --subject2_name="glasses"
+
+## results will be stored in ./assets/
+```
+
+## Multiconcept Interpolation
+Soon!
+
+## Canny-edge guided inference
+TBD
 
 # Acknowledgement
 
