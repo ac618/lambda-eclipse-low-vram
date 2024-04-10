@@ -9,6 +9,16 @@
 
 ---
 
+## 🚀 Latest Updates (April 2024)
+
+- 🔥🔥🔥 **Concept-specific finetuning:** DreamBooth style concept-based fine-tuning is now available **(without catastrophic forgetting)**!!
+    - [Click here to perform custom finetuning.](#finetuning)
+- 🔥🔥🔥 **Multi-concept interpolation:** Quick and easy script to perform multiconcept interpolations!! 
+- 🔥🔥 **Benchmark Release:** [Multibench (DropBox)](https://www.dropbox.com/scl/fo/1jn76jgducvfdciz1apa0/AMjI60khvN4Wx7bcB9C8oZw?rlkey=wevmnmf9jhwzrche9e9w6tr97&dl=0) -- Complex multi-subject personalization benchmark. This includes images with and without background.
+- 🔥 **Canny edge guided personalization:** Refer to [this section]() for additional **inference and benchmarking** details.
+
+## Overview
+
 This repository contains the inference code for our paper, &lambda;-ECLIPSE.
 
 - The &lambda;-ECLIPSE model is a light weight support for multi-concept personalization. &lambda;-ECLIPSE is tiny T2I prior model designed for Kandinsky v2.2 diffusion image generator.
@@ -23,20 +33,14 @@ This repository contains the inference code for our paper, &lambda;-ECLIPSE.
 **Please follow the below steps to run the inference locally.**
 
 ---
-
-**Qualitative Examples:**
 ![Examples](./assets/overview_white.png)
-
-
-**Quantitative Comparisons:**
-![Results](./assets/results.png)
 
 
 ## Setup
 
 ### Installation
 ```bash
-git clone git@github.com:Maitreyapatel/lambda-eclipse-inference.git
+git clone git@github.com:eclipse-t2i/lambda-eclipse-inference.git
 
 conda create -p ./venv python=3.9
 pip install -r requirements.txt
