@@ -148,7 +148,11 @@ python test_quick.py --unet_checkpoint="<path-to-unet-folder>" --prompt="a cat w
 ```
 
 ## Multiconcept Interpolation
-Soon!
+
+Please refer to the following script to perform interpolations on your own concepts:
+```bash
+python ./interpolation.py
+```
 
 ## Canny-edge guided inference
 TBD

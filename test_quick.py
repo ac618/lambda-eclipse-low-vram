@@ -20,6 +20,7 @@ def get_parser():
     parser.add_argument("--subject2_name", type=str, default=None, help="Learning rate")
     parser.add_argument("--output_dir", type=str, default="./assets/", help="Output directory")
     parser.add_argument("--unet_checkpoint", type=str, default=None, help="Finetuned UNet model FOLDER path")
+    parser.add_argument("--canny_image", type=str, default=None, help="Path to reference image to extract Canny edge map")
 
     args = parser.parse_args()
     return args
@@ -47,7 +48,7 @@ def main(args):
         print('Loading UNet Checkpoint')
         unet = UNet2DConditionModel.from_pretrained(args.unet_checkpoint)
         pipe.unet = unet
-        
+
     pipe = pipe.to("cuda")
 
     raw_data = {
