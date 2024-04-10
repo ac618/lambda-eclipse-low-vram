@@ -15,10 +15,9 @@
 ## 🚀 Latest Updates (April 2024)
 
 - 🔥🔥🔥 **Concept-specific finetuning:** DreamBooth style concept-based fine-tuning is now available **(without catastrophic forgetting)**!!
-    - [Click here to perform custom finetuning.](#finetuning)
-- 🔥🔥🔥 **Multi-concept interpolation:** Quick and easy script to perform multiconcept interpolations!! 
+    - [Click here to perform custom finetuning.](#concept-specific-finetuning)
+- 🔥🔥🔥 **Multi-concept interpolation:** [Quick and easy script](#🚀-multiconcept-interpolation) to perform multiconcept interpolations!! 
 - 🔥🔥 **Benchmark Release:** [Multibench (DropBox)](https://www.dropbox.com/scl/fo/1jn76jgducvfdciz1apa0/AMjI60khvN4Wx7bcB9C8oZw?rlkey=wevmnmf9jhwzrche9e9w6tr97&dl=0) -- Complex multi-subject personalization benchmark. This includes images with and without background.
-- 🔥 **Canny edge guided personalization:** Refer to [this section]() for additional **inference and benchmarking** details.
 
 ## Overview
 
@@ -57,12 +56,17 @@ pip install -r requirements.txt
 
 We recommend either referring to the colab notebook or [test.py](test.py) script to understand the inner working of &lambda;-ECLIPSE.
 
+- Additionally, for stronger Canny edge controlled results, we refer the  users to use `ControlNet` models, as &lambda;-ECLIPSE's goal is not to strongly follow Canny edge map but find the **balance between target concepts and canny edge map** to produce the most optimal results with some trade-off.
+
 ```bash
 # run the inference:
 conda activate ./venv
 
 # single-subject example
 python test_quick.py --prompt="a cat on top of the snow mountain" --subject1_path="./assets/cat.png" --subject1_name="cat"
+
+# single-subject canny example
+python ./test_quick.py --prompt="a dog is surfing" --subject1_path="./assets/dog2.png" --subject1_name="dog" --canny_image="./assets/dog_surf_ref.jpg"
 
 # multi-subject example
 python test_quick.py --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/blue_sunglasses.png" --subject2_name="glasses"
@@ -82,7 +86,7 @@ gradio main.py
 ```bash
 export DATASET_PATH="<path-to-parent-folder-containing-concept-specific-folders>"
 export OUTPUT_DIR="<output-dir>"
-export TRAINING_STEPS=8000
+export TRAINING_STEPS=8000 # for 30 concepts --> ~250 iterations per concept
 
 python train_text_to_image_decoder_whole_db.py \
         --dataset_name='lambdalabs/pokemon-blip-captions' \
@@ -147,15 +151,12 @@ python test_quick.py --unet_checkpoint="<path-to-unet-folder>" --prompt="a cat w
 ## results will be stored in ./assets/
 ```
 
-## Multiconcept Interpolation
+## 🚀 Multiconcept Interpolation
 
 Please refer to the following script to perform interpolations on your own concepts:
 ```bash
 python ./interpolation.py
 ```
-
-## Canny-edge guided inference
-TBD
 
 # Acknowledgement
 

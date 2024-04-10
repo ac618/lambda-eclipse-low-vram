@@ -3,10 +3,21 @@ import torch
 from transformers import (
     CLIPTextModelWithProjection,
     CLIPTokenizer,
+    CLIPImageProcessor
 )
 from src.pipelines.pipeline_kandinsky_subject_prior import KandinskyPriorPipeline
 from src.priors.lambda_prior_transformer import PriorTransformer
 from diffusers import DiffusionPipeline, UNet2DConditionModel
+
+import cv2 as cv
+from PIL import Image 
+
+def get_canny_edge(img_path):
+    img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)
+    edges = cv.Canny(img, 100, 200)
+    img = Image.fromarray(edges).convert("RGB")
+    img.save("./assets/canny_gen.png")
+    return img
 
 # write the argument parser
 def get_parser():
@@ -32,6 +43,10 @@ def main(args):
         torch_dtype=torch.float32,
     )
     tokenizer = CLIPTokenizer.from_pretrained("laion/CLIP-ViT-bigG-14-laion2B-39B-b160k")
+    image_processor = CLIPImageProcessor.from_pretrained(
+        "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k",
+        do_rescale=True,  # subfolder="image_processor"
+    )
 
     prior = PriorTransformer.from_pretrained("ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0")
     pipe_prior = KandinskyPriorPipeline.from_pretrained(
@@ -53,12 +68,24 @@ def main(args):
 
     raw_data = {
         "prompt": args.prompt,
-        "subject_images": [args.subject1_path, args.subject2_path],
-        "subject_keywords": [args.subject1_name, args.subject2_name]
+        "subject_images": [args.subject1_path],
+        "subject_keywords": [args.subject1_name]
     }
+    if args.subject2_path is not None:
+        raw_data["subject_images"].append(args.subject2_path)
+        raw_data["subject_keywords"].append(args.subject2_name)
+
+    canny_image_emb = None
+    if args.canny_image:
+        canny_img = torch.tensor(image_processor(get_canny_edge(args.canny_image)).pixel_values[0]).unsqueeze(0).to(pipe_prior.device)
+        canny_image_emb = pipe_prior.image_encoder(canny_img).image_embeds
+        print("canny image considered")
+
     image_emb, negative_image_emb = pipe_prior(
         raw_data=raw_data,
+        control_embedding=canny_image_emb, 
     ).to_tuple()
+
     image = pipe(
         image_embeds=image_emb,
         negative_image_embeds=negative_image_emb,
