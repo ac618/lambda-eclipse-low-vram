@@ -6,7 +6,8 @@
   <a href="https://huggingface.co/ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0"><img src="https://img.shields.io/static/v1?label=Model Weights&message=HuggingFace&color=yellow"></a> &ensp;
   <a href="https://colab.research.google.com/drive/1VcqzXZmilntec3AsIyzCqlstEhX4Pa1o?usp=sharing" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
   <br>
-  <i style="font-size: 24px">Version 2 of the paper is out!</i>
+  <br>
+  <i style="font-size: 36px">Version 2 of the paper is out!</i>
 </div>
 
 ---
