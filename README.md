@@ -89,11 +89,10 @@ export OUTPUT_DIR="<output-dir>"
 export TRAINING_STEPS=8000 # for 30 concepts --> ~250 iterations per concept
 
 python train_text_to_image_decoder_whole_db.py \
-        --dataset_name='lambdalabs/pokemon-blip-captions' \
         --instance_data_dir=$DATASET_PATH \
         --subject_data_dir=$DATASET_PATH \
         --output_dir=$OUTPUT_DIR \
-        --validation_prompts='A dog' \ # !!! Note: This is to check concept overfitting.
+        --validation_prompts='A dog' \
         --resolution=768 \
         --train_batch_size=1 \
         --gradient_accumulation_steps=4 \
@@ -113,15 +112,14 @@ python train_text_to_image_decoder_whole_db.py \
 ```bash
 export DATASET_PATH="<path-to-folder-containing-images>"
 export OUTPUT_DIR="<output-dir>"
-export CONCEPT="<high-level-concept-name-like-dog>"
+export CONCEPT="<high-level-concept-name-like-dog>" # !!! Note: This is to check concept overfitting. This never supposed to generate your concept images.
 export TRAINING_STEPS=400
 
 python train_text_to_image_decoder.py \
-        --dataset_name='lambdalabs/pokemon-blip-captions' \
         --instance_data_dir=$DATASET_PATH \
         --subject_data_dir=$DATASET_PATH \
         --output_dir=$OUTPUT_DIR \
-        --validation_prompts='A $CONCEPT' \ # !!! Note: This is to check concept overfitting. This never supposed to generate your concept images.
+        --validation_prompts='A $CONCEPT' \
         --resolution=768 \
         --train_batch_size=1 \
         --gradient_accumulation_steps=4 \

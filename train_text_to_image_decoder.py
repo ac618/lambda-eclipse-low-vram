@@ -74,11 +74,11 @@ def save_model_card(
 ---
 license: creativeml-openrail-m
 base_model: {args.pretrained_decoder_model_name_or_path}
-datasets:
-- {args.dataset_name}
 prior:
-- {args.pretrained_prior_model_name_or_path}
+- ECLIPSE-Community/Lambda-ECLIPSE-Prior-v1.0
 tags:
+- λ-ECLIPSE
+- ECLIPSE
 - kandinsky
 - text-to-image
 - diffusers
@@ -88,22 +88,11 @@ inference: true
     model_card = f"""
 # Finetuning - {repo_id}
 
-This pipeline was finetuned from **{args.pretrained_decoder_model_name_or_path}** on the **{args.dataset_name}** dataset. Below are some example images generated with the finetuned pipeline using the following prompts: {args.validation_prompts}: \n
+This pipeline was finetuned from **{args.pretrained_decoder_model_name_or_path}**. Below are some example images generated with the finetuned pipeline using the following prompts: {args.validation_prompts}: \n
 {img_str}
 
+Note: these example images should not follow the original target concept!! This is to ensure that there is not overfitting.
 ## Pipeline usage
-
-You can use the pipeline like so:
-
-```python
-from diffusers import DiffusionPipeline
-import torch
-
-pipeline = AutoPipelineForText2Image.from_pretrained("{repo_id}", torch_dtype=torch.float16)
-prompt = "{args.validation_prompts[0]}"
-image = pipeline(prompt).images[0]
-image.save("my_image.png")
-```
 
 ## Training info
 
@@ -200,16 +189,6 @@ def parse_args():
         default="kandinsky-community/kandinsky-2-2-prior",
         required=False,
         help="Path to pretrained model or model identifier from huggingface.co/models.",
-    )
-    parser.add_argument(
-        "--dataset_name",
-        type=str,
-        default=None,
-        help=(
-            "The name of the Dataset (from the HuggingFace hub) to train on (could be your own, possibly private,"
-            " dataset). It can also be a path pointing to a local copy of a dataset in your filesystem,"
-            " or to a folder containing files that 🤗 Datasets can understand."
-        ),
     )
     parser.add_argument(
         "--dataset_config_name",
@@ -444,10 +423,6 @@ def parse_args():
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
     if env_local_rank != -1 and env_local_rank != args.local_rank:
         args.local_rank = env_local_rank
-
-    # Sanity checks
-    if args.dataset_name is None and args.train_data_dir is None:
-        raise ValueError("Need either a dataset name or a training folder.")
 
     return args
 
@@ -709,38 +684,6 @@ def main():
         eps=args.adam_epsilon,
     )
 
-    # Get the datasets: you can either provide your own training and evaluation files (see below)
-    # or specify a Dataset from the hub (the dataset will be downloaded automatically from the datasets Hub).
-
-    # In distributed training, the load_dataset function guarantees that only one local process can concurrently
-    # download the dataset.
-    # if args.dataset_name is not None:
-    #     # Downloading and loading a dataset from the hub.
-    #     dataset = load_dataset(
-    #         args.dataset_name,
-    #         args.dataset_config_name,
-    #         cache_dir=args.cache_dir,
-    #     )
-    # else:
-    #     data_files = {}
-    #     if args.train_data_dir is not None:
-    #         data_files["train"] = os.path.join(args.train_data_dir, "**")
-    #     dataset = load_dataset(
-    #         "imagefolder",
-    #         data_files=data_files,
-    #         cache_dir=args.cache_dir,
-    #     )
-    #     # See more about loading custom images at
-    #     # https://huggingface.co/docs/datasets/v2.4.0/en/image_load#imagefolder
-
-    # Preprocessing the datasets.
-    # We need to tokenize inputs and targets.
-    # column_names = dataset["train"].column_names
-
-    # image_column = args.image_column
-    # if image_column not in column_names:
-    #     raise ValueError(f"--image_column' value '{args.image_column}' needs to be one of: {', '.join(column_names)}")
-
     def center_crop(image):
         width, height = image.size
         new_size = min(width, height)
@@ -757,25 +700,6 @@ def main():
         img = torch.from_numpy(np.transpose(img, [2, 0, 1]))
         return img
 
-    def preprocess_train(examples):
-        images = [image.convert("RGB") for image in examples[image_column]]
-        examples["pixel_values"] = [train_transforms(image) for image in images]
-        examples["clip_pixel_values"] = image_processor(images, return_tensors="pt").pixel_values
-        return examples
-
-    # with accelerator.main_process_first():
-    #     if args.max_train_samples is not None:
-    #         dataset["train"] = dataset["train"].shuffle(seed=args.seed).select(range(args.max_train_samples))
-    #     # Set the training transforms
-    #     train_dataset = dataset["train"].with_transform(preprocess_train)
-
-    def collate_fn(examples):
-        pixel_values = torch.stack([example["pixel_values"] for example in examples])
-        pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-        clip_pixel_values = torch.stack([example["clip_pixel_values"] for example in examples])
-        clip_pixel_values = clip_pixel_values.to(memory_format=torch.contiguous_format).float()
-        return {"pixel_values": pixel_values, "clip_pixel_values": clip_pixel_values}
-    
     # Dataset and DataLoaders creation:
     # TODO: Add agrs
     pre_computed_encoder_hidden_states = None
