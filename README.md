@@ -146,7 +146,7 @@ To perform combined &lambda;-ECLIPSE and finetuned UNet (previous step) inferenc
 conda activate ./venv
 
 # single/multi subject example
-python test_quick.py --unet_checkpoint="<path-to-unet-folder>" --prompt="a cat wearing glasses at a park" --subject1_path="./assets/cat.png" --subject1_name="cat" --subject2_path="./assets/blue_sunglasses.png" --subject2_name="glasses"
+python test_quick.py --unet_checkpoint="mpatel57/backpack_dog" --prompt="a backpack at the beach" --subject1_path="./assets/backpack_dog.png" --subject1_name="backpack"
 
 ## results will be stored in ./assets/
 ```
