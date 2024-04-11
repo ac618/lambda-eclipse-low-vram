@@ -105,7 +105,8 @@ python train_text_to_image_decoder_whole_db.py \
         --lr_warmup_steps=0 \
         --report_to=wandb \
         --validation_epochs=1000 \
-        --checkpointing_steps=1000
+        --checkpointing_steps=1000 \
+        --push_to_hub
 ```
 
 **Individual concept training:**
@@ -119,7 +120,7 @@ python train_text_to_image_decoder.py \
         --instance_data_dir=$DATASET_PATH \
         --subject_data_dir=$DATASET_PATH \
         --output_dir=$OUTPUT_DIR \
-        --validation_prompts='A $CONCEPT' \
+        --validation_prompts="A $CONCEPT" \
         --resolution=768 \
         --train_batch_size=1 \
         --gradient_accumulation_steps=4 \
@@ -132,7 +133,8 @@ python train_text_to_image_decoder.py \
         --lr_warmup_steps=0 \
         --report_to=wandb \
         --validation_epochs=100 \
-        --checkpointing_steps=100
+        --checkpointing_steps=100 \
+        --push_to_hub
 ```
 
 ## Combined Inference (Prior + Finetunined UNet):

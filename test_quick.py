@@ -61,7 +61,7 @@ def main(args):
     )
     if args.unet_checkpoint is not None:
         print('Loading UNet Checkpoint')
-        unet = UNet2DConditionModel.from_pretrained(args.unet_checkpoint)
+        unet = UNet2DConditionModel.from_pretrained(args.unet_checkpoint, subfolder="unet")
         pipe.unet = unet
 
     pipe = pipe.to("cuda")

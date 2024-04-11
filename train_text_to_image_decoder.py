@@ -468,19 +468,7 @@ class DreamBoothDataset(torch.utils.data.Dataset):
         self.num_subject_images = len(self.subject_images_path)
         self.instance_prompt = instance_prompt
         self._length = self.num_instance_images
-
-        if class_data_root is not None:
-            self.class_data_root = Path(class_data_root)
-            self.class_data_root.mkdir(parents=True, exist_ok=True)
-            self.class_images_path = list(self.class_data_root.iterdir())
-            if class_num is not None:
-                self.num_class_images = min(len(self.class_images_path), class_num)
-            else:
-                self.num_class_images = len(self.class_images_path)
-            self._length = max(self.num_class_images, self.num_instance_images)
-            self.class_prompt = class_prompt
-        else:
-            self.class_data_root = None
+        self.class_data_root = None
 
         self.image_transforms = transforms.Compose(
             [
@@ -511,16 +499,6 @@ class DreamBoothDataset(torch.utils.data.Dataset):
         example["instance_pil_images"] = [str(self.instance_images_path[index % self.num_instance_images])]
         example["subject_pil_images"] = [str(self.subject_images_path[index % self.num_subject_images])]
         example["instance_prompt"] = self.instance_prompt
-
-        if self.class_data_root:
-            class_image = Image.open(self.class_images_path[index % self.num_class_images])
-            class_image = self.image_transforms(class_image)
-
-            if not class_image.mode == "RGB":
-                class_image = class_image.convert("RGB")
-            example["class_pil_images"] = class_image
-            example["class_images"] = self.image_transforms(class_image)
-            example["class_prompt"] = self.class_prompt
 
         return example
 

@@ -510,16 +510,6 @@ class DreamBoothDataset(torch.utils.data.Dataset):
         example["subject_pil_images"] = [str(self.subject_images_path[index % self.num_subject_images])]
         example["instance_prompt"] = self.instance_prompt
 
-        if self.class_data_root:
-            class_image = Image.open(self.class_images_path[index % self.num_class_images])
-            class_image = self.image_transforms(class_image)
-
-            if not class_image.mode == "RGB":
-                class_image = class_image.convert("RGB")
-            example["class_pil_images"] = class_image
-            example["class_images"] = self.image_transforms(class_image)
-            example["class_prompt"] = self.class_prompt
-
         return example
 
 
