@@ -817,7 +817,7 @@ def main():
 
                 # TODO: (Not done yet!) fetch the pre-computed image_embeds
                 image_embeds = batch["image_embeds"][0].to(latents.device, weight_dtype)
-                torch.stack(image_embeds)
+                # torch.stack(image_embeds)
 
                 # Sample noise that we'll add to the latents
                 noise = torch.randn_like(latents)
