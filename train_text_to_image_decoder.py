@@ -711,12 +711,11 @@ def main():
         encoder_hidden_states=pre_computed_encoder_hidden_states,
         class_prompt_encoder_hidden_states=pre_computed_class_prompt_encoder_hidden_states,
         # tokenizer_max_length=args.tokenizer_max_length,
-        image_processor=image_processor.to(accelerator.device, dtype=weight_dtype),
+        image_processor=image_processor,
         image_encoder=image_encoder.to(accelerator.device, dtype=weight_dtype),
     )
 
     # Release VRAM for the image processor and image encoder
-    del image_processor
     del image_encoder
     torch.cuda.empty_cache()
 
@@ -746,7 +745,7 @@ def main():
     )
     # Move image_encode and vae to gpu and cast to weight_dtype
     # image_encoder.to(accelerator.device, dtype=weight_dtype)
-    # vae.to(accelerator.device, dtype=weight_dtype)
+    vae.to(accelerator.device, dtype=weight_dtype)
 
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
