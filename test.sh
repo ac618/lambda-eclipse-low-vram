@@ -1,0 +1,2 @@
+#!/bin/bash
+python3 train_text_to_image_decoder.py --instance_data_dir="./concept_image/cat2" --subject_data_dir="./concept_image/cat2" --output_dir="./checkpoints/cat2" --validation_prompts="A cat" --resolution=32 --train_batch_size=1 --gradient_accumulation_steps=4 --gradient_checkpointing --max_train_steps=400 --learning_rate=1e-05 --max_grad_norm=1 --checkpoints_total_limit=4 --lr_scheduler=constant --lr_warmup_steps=0 --report_to=wandb --validation_epochs=100 --checkpointing_steps=100

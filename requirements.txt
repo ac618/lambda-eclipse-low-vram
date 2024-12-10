@@ -1,6 +1,6 @@
 accelerate
 datasets
-diffusers==0.24.0
+diffusers==0.26.0
 numpy==1.26.1
 packaging==23.2
 pandas_stubs==1.2.0.57
@@ -14,3 +14,4 @@ jmespath
 opencv-python
 PyWavelet
 gradio
+huggingface_hub==0.25.2

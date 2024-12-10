@@ -89,6 +89,10 @@ def main(args):
         control_embedding=canny_image_emb, 
     ).to_tuple()
 
+    # release memory
+    del pipe_prior
+    torch.cuda.empty_cache()
+    
     image = pipe(
         image_embeds=image_emb,
         negative_image_embeds=negative_image_emb,

@@ -446,6 +446,9 @@ class DreamBoothDataset(torch.utils.data.Dataset):
         encoder_hidden_states=None,
         class_prompt_encoder_hidden_states=None,
         tokenizer_max_length=None,
+        # add the image processor and encoder to prepare the image embeddings
+        image_processor=None,
+        image_encoder=None,
     ):
         self.size = size
         self.center_crop = center_crop
@@ -477,6 +480,14 @@ class DreamBoothDataset(torch.utils.data.Dataset):
             ]
         )
 
+        # precompute the image embeddings to save VRAM
+        self.image_embeds = None
+        if image_processor is not None and image_encoder is not None:
+            self.image_embeds = []
+            for en_i in range(len(self.instance_images_path)):
+                clip_images = image_processor(Image.open(self.instance_images_path[en_i]), return_tensors="pt").to(image_encoder.device)
+                self.image_embeds.append(image_encoder(**clip_images).image_embeds[0])
+
     def __len__(self):
         return self._length
 
@@ -499,6 +510,9 @@ class DreamBoothDataset(torch.utils.data.Dataset):
         example["instance_pil_images"] = [str(self.instance_images_path[index % self.num_instance_images])]
         example["subject_pil_images"] = [str(self.subject_images_path[index % self.num_subject_images])]
         example["instance_prompt"] = self.instance_prompt
+        # get the image embeddings
+        if self.image_embeds is not None:
+            example["image_embeds"] = self.image_embeds[index % self.num_instance_images]
 
         return example
 
@@ -697,7 +711,14 @@ def main():
         encoder_hidden_states=pre_computed_encoder_hidden_states,
         class_prompt_encoder_hidden_states=pre_computed_class_prompt_encoder_hidden_states,
         # tokenizer_max_length=args.tokenizer_max_length,
+        image_processor=image_processor.to(accelerator.device, dtype=weight_dtype),
+        image_encoder=image_encoder.to(accelerator.device, dtype=weight_dtype),
     )
+
+    # Release VRAM for the image processor and image encoder
+    del image_processor
+    del image_encoder
+    torch.cuda.empty_cache()
 
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,
@@ -724,8 +745,9 @@ def main():
         unet, optimizer, train_dataloader, lr_scheduler
     )
     # Move image_encode and vae to gpu and cast to weight_dtype
-    image_encoder.to(accelerator.device, dtype=weight_dtype)
-    vae.to(accelerator.device, dtype=weight_dtype)
+    # image_encoder.to(accelerator.device, dtype=weight_dtype)
+    # vae.to(accelerator.device, dtype=weight_dtype)
+
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
     if overrode_max_train_steps:
@@ -794,11 +816,9 @@ def main():
                 images = batch["instance_images"].to(weight_dtype)
                 latents = vae.encode(images).latents
 
-                images_embeds = []
-                for en_i in range(len(batch["instance_pil_images"])):
-                    clip_images = image_processor(Image.open(batch["instance_pil_images"][en_i][0]), return_tensors="pt").to(latents.device, weight_dtype)
-                    images_embeds.append(image_encoder(**clip_images).image_embeds[0])
-                image_embeds = torch.stack(images_embeds)
+                # TODO: (Not done yet!) fetch the pre-computed image_embeds
+                image_embeds = batch["image_embeds"][0].to(latents.device, weight_dtype)
+                torch.stack(image_embeds)
 
                 # Sample noise that we'll add to the latents
                 noise = torch.randn_like(latents)
@@ -888,25 +908,25 @@ def main():
             if global_step >= args.max_train_steps:
                 break
 
-        if accelerator.is_main_process:
-            if args.validation_prompts is not None and epoch % args.validation_epochs == 0:
-                if args.use_ema:
-                    # Store the UNet parameters temporarily and load the EMA parameters to perform inference.
-                    ema_unet.store(unet.parameters())
-                    ema_unet.copy_to(unet.parameters())
-                log_validation(
-                    vae,
-                    image_encoder,
-                    image_processor,
-                    unet,
-                    args,
-                    accelerator,
-                    weight_dtype,
-                    global_step,
-                )
-                if args.use_ema:
-                    # Switch back to the original UNet parameters.
-                    ema_unet.restore(unet.parameters())
+        # if accelerator.is_main_process:
+        #     if args.validation_prompts is not None and epoch % args.validation_epochs == 0:
+        #         if args.use_ema:
+        #             # Store the UNet parameters temporarily and load the EMA parameters to perform inference.
+        #             ema_unet.store(unet.parameters())
+        #             ema_unet.copy_to(unet.parameters())
+        #         log_validation(
+        #             vae,
+        #             image_encoder,
+        #             image_processor,
+        #             unet,
+        #             args,
+        #             accelerator,
+        #             weight_dtype,
+        #             global_step,
+        #         )
+        #         if args.use_ema:
+        #             # Switch back to the original UNet parameters.
+        #             ema_unet.restore(unet.parameters())
 
     # Create the pipeline using the trained modules and save it.
     accelerator.wait_for_everyone()

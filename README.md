@@ -44,7 +44,8 @@ This repository contains the inference code for our paper, &lambda;-ECLIPSE.
 ```bash
 git clone git@github.com:eclipse-t2i/lambda-eclipse-inference.git
 
-conda create -p ./venv python=3.9
+conda create -p -y ./venv python=3.9
+conda activate ./venv
 pip install -r requirements.txt
 ```
 
